@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Jev Spoiler Shield (local MVP)",
+  "version": "0.1.0",
+  "description": "Hides potential GTA 6 spoilers while browsing. Personal local MVP; classifies via local backend + Jev.",
+  "permissions": ["storage"],
+  "host_permissions": ["http://localhost:3000/*"],
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "action": {
+    "default_popup": "src/popup.html",
+    "default_title": "Spoiler Shield"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost:3000/fake-feed*",
+        "https://x.com/*",
+        "https://twitter.com/*"
+      ],
+      "js": ["src/content.js"],
+      "run_at": "document_start"
+    }
+  ]
+}

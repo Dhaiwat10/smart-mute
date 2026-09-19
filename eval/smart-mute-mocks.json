@@ -1,0 +1,17 @@
+[
+  {"id": "c01", "expectHide": true, "expectMutes": ["crypto"], "text": "Bitcoin just broke its all-time high, ETF inflows are insane today", "notes": "direct crypto"},
+  {"id": "c02", "expectHide": true, "expectMutes": ["crypto"], "text": "My BTC and ETH portfolio finally recovered. Holding through the dip paid off", "notes": "direct crypto"},
+  {"id": "c03", "expectHide": true, "expectMutes": ["crypto"], "text": "My digital coins are pumping again, still number one by market cap", "notes": "paraphrase, no keywords — heuristic likely misses, Jev should catch"},
+  {"id": "c04", "expectHide": false, "expectMutes": [], "text": "S&P 500 closed at a record. My index funds are doing the quiet work", "notes": "stocks, not crypto — must reveal"},
+  {"id": "c05", "expectHide": false, "expectMutes": [], "text": "The Fed cut rates again. Mortgage shoppers rejoice", "notes": "finance, not crypto — must reveal"},
+  {"id": "w01", "expectHide": true, "expectMutes": ["worldcup"], "text": "World Cup final was unreal, that extra-time winner broke my voice", "notes": "direct football"},
+  {"id": "w02", "expectHide": true, "expectMutes": ["worldcup"], "text": "That offside call in the semifinal is going to be debated for years", "notes": "football, no 'World Cup' words — Jev should catch via context"},
+  {"id": "w03", "expectHide": false, "expectMutes": [], "text": "Lakers blew a 20 point lead again. I need a new team", "notes": "basketball, not football — must reveal"},
+  {"id": "w04", "expectHide": false, "expectMutes": [], "text": "My World Cup of coffee this morning was enormous", "notes": "joke substring — must reveal"},
+  {"id": "g01", "expectHide": true, "expectMutes": ["gta6"], "text": "GTA 6 ending leaked: Lucia turns on Jason in the final Leonida heist", "notes": "fictional mock; spoiler mode still works alongside topic mutes"},
+  {"id": "g02", "expectHide": false, "expectMutes": [], "text": "GTA 6 trailer 2 drops Tuesday, Rockstar confirmed the time", "notes": "GTA6 news, no plot — high spoiler sensitivity may still hide; documented cost"},
+  {"id": "g03", "expectHide": false, "expectMutes": [], "text": "GTA Online new heist pays double this week, grinding tonight", "notes": "GTA Online — must reveal"},
+  {"id": "u01", "expectHide": false, "expectMutes": [], "text": "My sourdough finally rose properly. Third attempt's the charm", "notes": "unrelated"},
+  {"id": "u02", "expectHide": false, "expectMutes": [], "text": "Can't believe the Chiefs lost like that in overtime", "notes": "American football — must NOT hit worldcup mute"},
+  {"id": "b01", "expectHide": true, "expectMutes": ["crypto", "worldcup"], "text": "Wild day: Bitcoin all-time high AND a World Cup semifinal upset in the same evening", "notes": "both mutes fire"}
+]

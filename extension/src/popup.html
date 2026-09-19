@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+  body { width: 330px; font-family: -apple-system, system-ui, sans-serif; margin: 0; padding: 12px 14px; }
+  h1 { font-size: 14px; margin: 0 0 4px; }
+  .row { display: flex; align-items: center; gap: 8px; margin: 8px 0; font-size: 13px; }
+  .mute { border: 1px solid #ccd; border-radius: 10px; padding: 8px 10px; margin: 8px 0; font-size: 12px; }
+  .mute .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .mute .name { font-weight: 700; font-size: 13px; }
+  .mute .meta { color: #555; margin-top: 4px; }
+  .mute button { border: 1px solid #999; background: transparent; border-radius: 12px; padding: 2px 10px; cursor: pointer; }
+  .mute.expired { opacity: 0.5; }
+  label { display: block; font-size: 12px; margin: 8px 0 2px; color: #333; }
+  input[type="text"], select { width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 12px; margin-bottom: 4px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  button.primary { border: 0; border-radius: 16px; padding: 6px 14px; cursor: pointer; font-weight: 700; background: #1d9bf0; color: #fff; }
+  button.ghost { background: transparent; border: 1px solid #999; border-radius: 16px; padding: 6px 14px; cursor: pointer; }
+  #status { font-size: 11px; color: #666; margin-top: 8px; white-space: pre-wrap; }
+  a { font-size: 12px; }
+  .note { font-size: 11px; color: #666; margin-top: 8px; }
+  h2 { font-size: 12px; margin: 12px 0 0; }
+</style>
+</head>
+<body>
+  <h1>Smart Mute (local MVP)</h1>
+  <div class="row">
+    <input type="checkbox" id="enabled" />
+    <label for="enabled" style="margin:0">Enabled (hide-first, fail closed)</label>
+  </div>
+  <div class="row">
+    <label for="backendUrl" style="margin:0">Backend</label>
+    <input type="text" id="backendUrl" value="http://localhost:3000" style="flex:1" />
+  </div>
+  <div id="mutes"></div>
+  <h2>Add mute</h2>
+  <label for="fName">Topic</label>
+  <input type="text" id="fName" placeholder="e.g. Crypto, World Cup, Severance" />
+  <label for="fAliases">Aliases (comma separated)</label>
+  <input type="text" id="fAliases" placeholder="e.g. BTC, bitcoin" />
+  <div class="grid2">
+    <div>
+      <label for="fMode">Mode</label>
+      <select id="fMode">
+        <option value="topic">Topic mute (hide all about it)</option>
+        <option value="spoiler">Spoiler shield (hide revelations)</option>
+      </select>
+    </div>
+    <div>
+      <label for="fSens">Sensitivity</label>
+      <select id="fSens">
+        <option value="high">High (hide on doubt)</option>
+        <option value="medium" selected>Medium</option>
+        <option value="low">Low (only clear hits)</option>
+      </select>
+    </div>
+  </div>
+  <label for="fDur">Duration</label>
+  <select id="fDur">
+    <option value="forever" selected>Forever</option>
+    <option value="24h">24 hours</option>
+    <option value="7d">7 days</option>
+    <option value="30d">30 days</option>
+  </select>
+  <div class="row">
+    <button class="primary" id="add">Add mute</button>
+    <button class="ghost" id="save">Save all</button>
+    <button class="ghost" id="clear">Clear cache</button>
+  </div>
+  <div><a href="http://localhost:3000/fake-feed" target="_blank">Open fake test feed</a></div>
+  <div id="status">…</div>
+  <div class="note">Topic mute hides anything substantively about the topic. Spoiler shield hides only revelations (deaths, endings, twists). Text only — images/video are a known gap.</div>
+  <script src="popup.js"></script>
+</body>
+</html>
