@@ -1,7 +1,11 @@
-/* Popup: manage the smart-mute list in chrome.storage.local via the background worker. */
+/* Popup: mute list with instant auto-save. Every change persists immediately
+ * and the open X page reacts in real time via storage sync (see content.js).
+ * No save button.
+ */
 "use strict";
 const $ = (id) => document.getElementById(id);
 let mutes = [];
+let saveTimer = null;
 
 function durToExpiresAt(dur) {
   const now = Date.now();
@@ -16,17 +20,39 @@ function fmtExpiry(m) {
   const ms = m.expiresAt - Date.now();
   if (ms <= 0) return "expired";
   const h = Math.round(ms / 3600e3);
-  return h < 48 ? `expires in ~${h}h` : `expires in ~${Math.round(h / 24)}d`;
+  return h < 48 ? `~${h}h left` : `~${Math.round(h / 24)}d left`;
+}
+
+function flash(msg, ok) {
+  const s = $("status");
+  s.textContent = msg;
+  s.classList.toggle("ok", !!ok);
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => { s.textContent = ""; s.classList.remove("ok"); }, 2500);
+}
+
+async function persist() {
+  await chrome.runtime.sendMessage({
+    type: "CONFIG_SET",
+    enabled: $("enabled").checked,
+    backendUrl: $("backendUrl").value.trim() || "http://localhost:3000",
+    mutes,
+  });
+  flash("Saved", true);
 }
 
 function render() {
   const box = $("mutes");
   box.innerHTML = "";
+  const active = mutes.filter((m) => !m.expiresAt || m.expiresAt > Date.now());
+  $("subline").textContent = mutes.length
+    ? `${active.length} mute${active.length === 1 ? "" : "s"} active.`
+    : "Hide whole topics, semantically.";
   if (!mutes.length) {
-    box.innerHTML = '<div class="note">No mutes yet. Add one below.</div>';
+    box.innerHTML = '<div class="empty">No mutes yet — add one below.</div>';
     return;
   }
-  mutes.forEach((m, i) => {
+  mutes.forEach((m) => {
     const expired = m.expiresAt && m.expiresAt <= Date.now();
     const div = document.createElement("div");
     div.className = "mute" + (expired ? " expired" : "");
@@ -36,13 +62,21 @@ function render() {
     name.className = "name";
     name.textContent = m.name;
     const del = document.createElement("button");
-    del.textContent = "Remove";
-    del.addEventListener("click", () => { mutes.splice(i, 1); render(); });
+    del.className = "x";
+    del.textContent = "✕";
+    del.title = `Remove mute "${m.name}"`;
+    del.addEventListener("click", () => {
+      mutes = mutes.filter((x) => x !== m);
+      render();
+      persist();
+    });
     top.appendChild(name);
     top.appendChild(del);
     const meta = document.createElement("div");
     meta.className = "meta";
-    meta.textContent = `${m.mode === "topic" ? "topic mute" : "spoiler shield"} · ${m.sensitivity} · ${fmtExpiry(m)}${m.aliases && m.aliases.length ? " · aka " + m.aliases.join(", ") : ""}`;
+    const b = document.createElement("b");
+    b.textContent = m.mode === "topic" ? "topic" : "spoilers";
+    meta.append(b, document.createTextNode(` · ${m.sensitivity} · ${fmtExpiry(m)}`));
     div.appendChild(top);
     div.appendChild(meta);
     box.appendChild(div);
@@ -58,43 +92,40 @@ async function load() {
   try {
     const r = await fetch(`${$("backendUrl").value.replace(/\/$/, "")}/health`);
     const j = await r.json();
-    $("status").textContent = `Backend: ok, jev=${j.jevConfigured ? "configured" : "MISSING (heuristic)"} · ${mutes.length} mute(s)`;
+    flash(j.jevConfigured ? "Connected" : "Backend up, Jev key missing", j.jevConfigured);
   } catch {
-    $("status").textContent = "Backend unreachable — start it (`node server/src/server.js`). Extension will fail closed (hide).";
+    flash("Backend unreachable — start it first", false);
   }
 }
 
 $("add").addEventListener("click", () => {
   const name = $("fName").value.trim();
-  if (!name) { $("status").textContent = "Enter a topic name first."; return; }
+  if (!name) { flash("Name the topic first", false); return; }
   mutes.push({
     id: "m" + Date.now().toString(36),
     name,
-    aliases: $("fAliases").value.split(",").map((s) => s.trim()).filter(Boolean),
+    aliases: [], // Jev resolves name variants itself.
     mode: $("fMode").value,
     sensitivity: $("fSens").value,
     duration: $("fDur").value,
     expiresAt: durToExpiresAt($("fDur").value),
   });
   $("fName").value = "";
-  $("fAliases").value = "";
   render();
-  $("status").textContent = "Mute added (not saved yet — hit Save all).";
+  persist();
 });
 
-$("save").addEventListener("click", async () => {
-  await chrome.runtime.sendMessage({
-    type: "CONFIG_SET",
-    enabled: $("enabled").checked,
-    backendUrl: $("backendUrl").value.trim() || "http://localhost:3000",
-    mutes,
-  });
-  $("status").textContent = `Saved ${mutes.length} mute(s). Cache cleared.`;
+$("enabled").addEventListener("change", persist);
+
+let backendTimer = null;
+$("backendUrl").addEventListener("input", () => {
+  clearTimeout(backendTimer);
+  backendTimer = setTimeout(persist, 800);
 });
 
 $("clear").addEventListener("click", async () => {
   await chrome.runtime.sendMessage({ type: "CACHE_CLEAR" });
-  $("status").textContent = "Cache cleared.";
+  flash("Cache cleared", true);
 });
 
 load();

@@ -3,56 +3,102 @@
 <head>
 <meta charset="utf-8" />
 <style>
-  body { width: 330px; font-family: -apple-system, system-ui, sans-serif; margin: 0; padding: 12px 14px; }
-  h1 { font-size: 14px; margin: 0 0 4px; }
-  .row { display: flex; align-items: center; gap: 8px; margin: 8px 0; font-size: 13px; }
-  .mute { border: 1px solid #ccd; border-radius: 10px; padding: 8px 10px; margin: 8px 0; font-size: 12px; }
-  .mute .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  .mute .name { font-weight: 700; font-size: 13px; }
-  .mute .meta { color: #555; margin-top: 4px; }
-  .mute button { border: 1px solid #999; background: transparent; border-radius: 12px; padding: 2px 10px; cursor: pointer; }
-  .mute.expired { opacity: 0.5; }
-  label { display: block; font-size: 12px; margin: 8px 0 2px; color: #333; }
-  input[type="text"], select { width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 12px; margin-bottom: 4px; }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-  button.primary { border: 0; border-radius: 16px; padding: 6px 14px; cursor: pointer; font-weight: 700; background: #1d9bf0; color: #fff; }
-  button.ghost { background: transparent; border: 1px solid #999; border-radius: 16px; padding: 6px 14px; cursor: pointer; }
-  #status { font-size: 11px; color: #666; margin-top: 8px; white-space: pre-wrap; }
-  a { font-size: 12px; }
-  .note { font-size: 11px; color: #666; margin-top: 8px; }
-  h2 { font-size: 12px; margin: 12px 0 0; }
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    width: 340px; margin: 0; padding: 16px;
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    background: #000; color: #e7e9ea;
+  }
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .header h1 { font-size: 15px; margin: 0; font-weight: 800; }
+  .header h1 span { color: #1d9bf0; }
+  .sub { font-size: 11.5px; color: #71767b; margin: 0 0 12px; }
+  /* toggle switch */
+  .switch { position: relative; width: 44px; height: 26px; flex-shrink: 0; cursor: pointer; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .track {
+    position: absolute; inset: 0; border-radius: 20px;
+    background: #2f3336; transition: background 0.2s ease;
+  }
+  .track::after {
+    content: ""; position: absolute; top: 3px; left: 3px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #71767b; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .switch input:checked + .track { background: #1d9bf0; }
+  .switch input:checked + .track::after { transform: translateX(18px); background: #fff; }
+  /* mute cards */
+  #mutes { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+  .mute {
+    border: 1px solid #2f3336; border-radius: 14px; padding: 10px 12px;
+    background: #16181c;
+  }
+  .mute .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .mute .name { font-weight: 700; font-size: 13.5px; }
+  .mute .meta { font-size: 11.5px; color: #71767b; margin-top: 3px; }
+  .mute .meta b { color: #e7e9ea; font-weight: 600; }
+  .mute.expired { opacity: 0.45; }
+  .x {
+    border: 1px solid #2f3336; background: transparent; color: #71767b;
+    border-radius: 50%; width: 24px; height: 24px; cursor: pointer;
+    font-size: 12px; line-height: 1; flex-shrink: 0;
+  }
+  .x:hover { color: #f4212e; border-color: #f4212e; }
+  .empty { font-size: 12px; color: #71767b; text-align: center; padding: 10px 0; }
+  /* add form */
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: #71767b; margin: 14px 0 8px; }
+  label { display: block; font-size: 11.5px; color: #71767b; margin: 8px 0 4px; }
+  input[type="text"], select {
+    width: 100%; padding: 8px 10px; font-size: 13px;
+    background: #16181c; color: #e7e9ea;
+    border: 1px solid #2f3336; border-radius: 10px; outline: none;
+  }
+  input[type="text"]:focus, select:focus { border-color: #1d9bf0; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  #add {
+    width: 100%; margin-top: 12px; padding: 9px;
+    border: 0; border-radius: 20px; cursor: pointer;
+    background: #1d9bf0; color: #fff; font-weight: 700; font-size: 13.5px;
+  }
+  #add:hover { background: #1a8cd8; }
+  .footer { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
+  .footer a { font-size: 12px; color: #1d9bf0; text-decoration: none; }
+  #clear { background: none; border: none; color: #71767b; font-size: 12px; cursor: pointer; }
+  #clear:hover { color: #e7e9ea; }
+  #status { font-size: 11px; color: #71767b; margin-top: 8px; min-height: 14px; }
+  #status.ok { color: #00ba7c; }
 </style>
 </head>
 <body>
-  <h1>Smart Mute (local MVP)</h1>
-  <div class="row">
-    <input type="checkbox" id="enabled" />
-    <label for="enabled" style="margin:0">Enabled (hide-first, fail closed)</label>
+  <div class="header">
+    <h1>Smart <span>Mute</span></h1>
+    <label class="switch" title="Turn shielding on/off — the page updates instantly">
+      <input type="checkbox" id="enabled" />
+      <span class="track"></span>
+    </label>
   </div>
-  <div class="row">
-    <label for="backendUrl" style="margin:0">Backend</label>
-    <input type="text" id="backendUrl" value="http://localhost:3000" style="flex:1" />
-  </div>
+  <p class="sub" id="subline">Hide whole topics, semantically.</p>
+
   <div id="mutes"></div>
-  <h2>Add mute</h2>
+
+  <h2>New mute</h2>
   <label for="fName">Topic</label>
-  <input type="text" id="fName" placeholder="e.g. Crypto, World Cup, Severance" />
-  <label for="fAliases">Aliases (comma separated)</label>
-  <input type="text" id="fAliases" placeholder="e.g. BTC, bitcoin" />
+  <input type="text" id="fName" placeholder="e.g. Crypto, World Cup, Severance" autocomplete="off" />
   <div class="grid2">
     <div>
       <label for="fMode">Mode</label>
       <select id="fMode">
-        <option value="topic">Topic mute (hide all about it)</option>
-        <option value="spoiler">Spoiler shield (hide revelations)</option>
+        <option value="topic">Topic mute</option>
+        <option value="spoiler">Spoiler shield</option>
       </select>
     </div>
     <div>
       <label for="fSens">Sensitivity</label>
       <select id="fSens">
-        <option value="high">High (hide on doubt)</option>
+        <option value="high">High</option>
         <option value="medium" selected>Medium</option>
-        <option value="low">Low (only clear hits)</option>
+        <option value="low">Low</option>
       </select>
     </div>
   </div>
@@ -63,14 +109,17 @@
     <option value="7d">7 days</option>
     <option value="30d">30 days</option>
   </select>
-  <div class="row">
-    <button class="primary" id="add">Add mute</button>
-    <button class="ghost" id="save">Save all</button>
-    <button class="ghost" id="clear">Clear cache</button>
+  <button id="add">Add mute</button>
+
+  <div class="footer">
+    <a href="http://localhost:3000/fake-feed" target="_blank">Test feed</a>
+    <button id="clear">Clear cache</button>
   </div>
-  <div><a href="http://localhost:3000/fake-feed" target="_blank">Open fake test feed</a></div>
-  <div id="status">…</div>
-  <div class="note">Topic mute hides anything substantively about the topic. Spoiler shield hides only revelations (deaths, endings, twists). Text only — images/video are a known gap.</div>
+  <div style="margin-top:10px">
+    <label for="backendUrl" style="margin-top:0">Backend</label>
+    <input type="text" id="backendUrl" value="http://localhost:3000" />
+  </div>
+  <div id="status"></div>
   <script src="popup.js"></script>
 </body>
 </html>

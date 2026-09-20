@@ -100,12 +100,12 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         sendResponse(await getConfig());
         break;
       case "CONFIG_SET":
-        await chrome.storage.local.set({
+        cache.clear(); // clear first: content scripts rescan off the storage
+        await chrome.storage.local.set({ // write, content reacts live (see onChanged)
           enabled: Boolean(msg.enabled),
           backendUrl: String(msg.backendUrl || DEFAULTS.backendUrl),
           mutes: Array.isArray(msg.mutes) ? msg.mutes.slice(0, 20) : DEFAULT_MUTES,
         });
-        cache.clear();
         sendResponse({ ok: true });
         break;
       case "CACHE_CLEAR":

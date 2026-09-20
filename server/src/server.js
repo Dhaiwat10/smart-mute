@@ -402,6 +402,7 @@ const server = http.createServer(async (req, res) => {
         if (d.hide) hits.push({ id: mute.id, name: mute.name, mode: mute.mode, reason: d.reason });
       }
       const top = hits[0];
+      console.log(`[check] hide=${hits.length > 0} mutes=[${mutes.map((m) => m.name).join(",")}] hits=[${hits.map((h) => h.id).join(",")}] :: ${(postText || "").slice(0, 90).replace(/\n/g, " ")}`);
       sendJson(res, 200, {
         hide: hits.length > 0,
         hits,

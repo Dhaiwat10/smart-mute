@@ -1,66 +1,65 @@
-# Jev Smart Mute — local MVP (multi-topic, fake feed)
+# Smart Mute for X
 
-Personal prototype. Mute whole topics semantically, shield spoilers per
-topic. Tests on a local fake feed with fictional mock data.
+A Chrome extension (Manifest V3) that hides whole **topics** on X/Twitter semantically — not just keywords. Powered by [Jev](https://docs.typesafe.ai/) (TypeSafe AI), which returns typed yes/no decisions instead of generated text, so classification is fast (~200ms) and cheap (fractions of a cent per thousand posts).
 
-## Layout
+Two modes per mute:
+
+- **Topic mute** — hides anything substantively about the topic (paraphrases and coded language included, no keyword lists needed).
+- **Spoiler shield** — hides only revelations about the topic (deaths, endings, twists), lets other discussion through.
+
+Each mute has its own sensitivity (high / medium / low) and duration (forever / 24h / 7d / 30d).
+
+## How it works
 
 ```text
-server/src/server.js      local backend: /api/check (Jev fan-out or heuristic), /fake-feed, /health
-server/.env               YOUR key here (not committed): TYPESAFE_API_KEY=...
-extension/                unpacked Chrome MV3 extension (content + background + popup)
-eval/mock-tweets.json     fictional GTA 6 spoiler set (legacy single-topic eval)
-eval/run.js               scores spoiler shield: recall/precision/latency
-eval/smart-mute-mocks.json  multi-topic set (crypto, World Cup, GTA 6)
-eval/run-mutes.js         scores multi-mute fan-out: one call/post, all topics in parallel
+X page → content script (viewport-gated: only tweets you approach are checked)
+       → background worker (dedupe + cache)
+       → local backend → Jev (all mutes fanned out in one parallel call)
+       → hide (blur + label bar) or leave alone
 ```
 
-## Setup
+Measured on mock sets with real Jev: spoiler shield 100% recall / 96% precision; multi-topic attribution 15/15.
 
-1. Add your key:
-   ```sh
-   cp server/.env.example server/.env
-   # edit server/.env, set TYPESAFE_API_KEY
-   ```
-   Without a key the backend uses a conservative keyword heuristic so you
-   can still test end-to-end (eval will show lower precision).
+## Installation
 
-2. Start the backend:
-   ```sh
-   node server/src/server.js
-   # -> http://localhost:3000, fake feed at /fake-feed
-   ```
+Prereqs: Node.js 20+, Chrome, a [TypeSafe API key](https://console.typesafe.ai/keys).
 
-3. Load the extension (unpacked, personal use only):
-   - Open `chrome://extensions`, enable Developer mode
-   - Load unpacked → select the `extension/` folder
-   - Open the popup, add mutes (topic mute and/or spoiler shield,
-     sensitivity low/medium/high, duration 24h/7d/30d/forever)
-   - Open `http://localhost:3000/fake-feed`, scroll, use Load-more/Burst buttons
-   - Matches hide behind "Muted (names)" veils; safe posts reveal
+```sh
+# 1. Backend
+cp server/.env.example server/.env   # add TYPESAFE_API_KEY=...
+node server/src/server.js            # http://localhost:3000 (leave running)
 
-4. Run the evals:
-   ```sh
-   node eval/run.js        # spoiler shield: target 100% recall, some FPs expected
-   node eval/run-mutes.js  # smart mute fan-out: correct mute attribution per post
-   ```
+# 2. Extension (no build step)
+# chrome://extensions → Developer mode → Load unpacked → select extension/
+```
 
-## Modes and sensitivity
+## Usage
 
-- Topic mute: hides anything substantively about the topic.
-- Spoiler shield: hides only revelations (deaths, endings, twists).
-- Sensitivity per mute: high ≥0.35 (hide on doubt), medium ≥0.55,
-  low ≥0.75. High behaves like the original fail-closed spoiler shield;
-  low only hides clear hits.
+1. Click the extension icon → flip the toggle on.
+2. Add a mute: topic name, mode, sensitivity, duration. It auto-saves and the open X tab updates live.
+3. Browse X. Muted posts blur with a label bar (`Muted · Crypto`); **Show** restores any post.
+4. Toggle off anytime to restore the whole page instantly.
 
-## Policy
+Tip for testing: X search for your muted topic gives a dense page of hits.
 
-Hide-first, fail closed: posts hide before classification; API errors,
-timeouts, and uncertain scores all hide. Sensitivity fixed to High.
-Text only — image/video-only posts are a known gap (left visible, flagged
-in fake feed and eval).
+## Evaluation
+
+```sh
+node eval/run.js         # spoiler shield: recall/precision/latency
+node eval/run-mutes.js   # multi-topic fan-out correctness
+```
+
+See `eval/thresholds.md` for sensitivity tuning notes, including a real Jev wording trap we found and fixed (ask about *containment*, not *aboutness*).
+
+`GET /fake-feed` on the backend serves a local mock X feed (fictional data, labels hidden from the DOM) so you can test without touching real Twitter.
 
 ## Cost
 
-Jev list price $0.042/M input tokens, output free. ~250–700 input tokens
-per check → 1,000 checks ≈ $0.01–$0.03. Cache + dedupe keep scroll bursts cheap.
+Jev list price is $0.042 per million input tokens, output free — roughly **$0.01 per 1,000 checks**. Viewport gating plus caching keeps real usage near that floor.
+
+## Limitations
+
+- **Text only.** Jev takes text; image/video-only posts pass through visibly. Known gap, flagged in the test feed.
+- **X's DOM is unofficial** and changes periodically; selectors may need maintenance.
+- Muted posts are readable for ~200ms before the verdict lands (no hide-first blurring, by design).
+- Personal project: API key stays in your local `server/.env` (git-ignored, never shipped in the extension). No accounts, no tracking.
